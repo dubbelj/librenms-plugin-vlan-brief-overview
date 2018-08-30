@@ -7,5 +7,6 @@ INSTALL
 3. Click enable on "VLANs"
 
 USAGE
+
 You should have a VLAN list in Overview->Plugins->VLANs
 And if the device is in STP table you should get a "LibreNMS\Plugins\VLANs Plugin" section with STP domain members in the device.
