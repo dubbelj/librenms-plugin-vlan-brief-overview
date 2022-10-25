@@ -69,9 +69,9 @@ foreach (explode(",", $vlans_to_exclude) as $vlan){
 	}
 }
 foreach( dbFetchRows($query) as $line){
-	$device_id=$line[device_id];
-	$device_group_id=$line[device_group_id];
-	$device_group_name=$line[name];
+	$device_id=$line['device_id'];
+	$device_group_id=$line['device_group_id'];
+	$device_group_name=$line['name'];
 	if (array_key_exists ($device_group_id, $device_groups)){
 		# Do nothing
 	}else{
@@ -117,7 +117,7 @@ WHERE
 ORDER BY vlan_vlan,vlan_name";
 
 foreach( dbFetchRows($query) as $line){
-	$device_id=$line[device_id];
+	$device_id=$line['device_id'];
 	$device_is_excluded=0;
 	foreach($device_members_groups[$device_id] as $gid => $foo){
 		if (array_key_exists($gid, $group_ids_to_exclude)){
@@ -128,15 +128,15 @@ foreach( dbFetchRows($query) as $line){
 		# Do nothing
 	}else{
 
-		if (array_key_exists ($line[vlan_vlan], $vlan_nr_to_exclude_from_report)){
+		if (array_key_exists ($line['vlan_vlan'], $vlan_nr_to_exclude_from_report)){
 			#Exclude from report
 		}else{
-			$data[$line[vlan_vlan]][$line[vlan_name]][" <A HREF='/device/device=$line[device_id]'>$line[sysName]</A>"]++;
+			$data[$line['vlan_vlan']][$line['vlan_name']][" <A HREF='/device/device=$line[device_id]'>$line[sysName]</A>"]++;
 			$key="$line[sysName].$line[vlan_vlan]";
-			$vlans[$key][name]=$line[vlan_name];
-			$vlans[$key][vlan]=$line[vlan_vlan];
-			$vlans[$key][device]=$line[sysName];
-			$vlans[$key][type]=$line[type];
+			$vlans[$key]['name']=$line['vlan_name'];
+			$vlans[$key]['vlan']=$line['vlan_vlan'];
+			$vlans[$key]['device']=$line['sysName'];
+			$vlans[$key]['type']=$line['type'];
 		}
 	}
 }
@@ -190,9 +190,9 @@ $device_no_fdb_vlan=array();
 foreach ($vlans as $vlan_id => $vlaninfo){
 	# Remaining vlans should not have any active FDB entrys
 	# print "$vlaninfo[vlan], $vlaninfo[name], $vlaninfo[device], $vlaninfo[type]<br>\n";
-	$device_no_fdb_vlan[$vlaninfo[device]][$vlan_id][vlan]=$vlaninfo[vlan];
-	$device_no_fdb_vlan[$vlaninfo[device]][$vlan_id][name]=$vlaninfo[name];
-	$device_no_fdb_vlan[$vlaninfo[device]][$vlan_id][type]=$vlaninfo[type];
+	$device_no_fdb_vlan[$vlaninfo['device']][$vlan_id]['vlan']=$vlaninfo['vlan'];
+	$device_no_fdb_vlan[$vlaninfo['device']][$vlan_id]['name']=$vlaninfo['name'];
+	$device_no_fdb_vlan[$vlaninfo['device']][$vlan_id]['type']=$vlaninfo['type'];
 }
 
 #print "The vlans listed here do not have any active FDB entrys<br>\n";
