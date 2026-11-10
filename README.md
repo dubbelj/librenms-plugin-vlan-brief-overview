@@ -1,10 +1,14 @@
 # librenms-plugin-vlan-brief-overview
 A plugin for Librenms to list all device VLAN and some basic STP support (List devices in same STP domain, but it is very basic. Does not support multiple VLAN etc.)
 
+Tested with LibreNMS 26.x on PHP 8.4 (legacy v1 plugin, page served at /plugin/v1/VLANs).
+
 INSTALL
 1. Copy the VLANs directory to your librenms/html/plugins/ directory.
+   Docker image (librenms/librenms): copy it to /data/plugins/VLANs instead and restart the container,
+   the image links every directory from /data/plugins into html/plugins on start.
 2. In Librenms go to Overview->Plugins->Plugin Admin
-3. Click enable on "VLANs"
+3. Click enable on "VLANs" (or run: lnms plugin:enable VLANs)
 
 USAGE
 
