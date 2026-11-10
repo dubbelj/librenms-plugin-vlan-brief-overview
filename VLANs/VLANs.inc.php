@@ -6,6 +6,8 @@ $plugin_name="VLANs";
 
 $vlan_nr_to_exclude_from_report=array();
 $default_vlans_to_exclude="1,1002-1005";
+$vlans_to_exclude=$default_vlans_to_exclude;
+$n=0;
 
 
 print '<style type="text/css">
@@ -36,12 +38,12 @@ if ($_POST){
 	#print "DEBUG:<pre>";
 	#var_dump($_POST);
 	#print "</pre><br>\n";
-	foreach ($_POST["group_selected"] as $arrayid => $gid){
+	foreach (($_POST["group_selected"] ?? []) as $arrayid => $gid){
 		#print "DEBUG: POST data '$gid'<br>\n";
 		$group_ids_to_exclude[$gid]=1;
 	}
-	if ($_POST["vlans_to_exclude"] ){
-		$vlans_to_exclude=$_POST["vlans_to_exclude"];
+	if (!empty($_POST["vlans_to_exclude"])){
+		$vlans_to_exclude=preg_replace('/[^0-9,\-]/', '', $_POST["vlans_to_exclude"]);
 	}
 }else{
 	$vlans_to_exclude=$default_vlans_to_exclude;
@@ -68,7 +70,7 @@ foreach (explode(",", $vlans_to_exclude) as $vlan){
 		$vlan_nr_to_exclude_from_report[$vlan]=1;
 	}
 }
-foreach( dbFetchRows($query) as $line){
+foreach( array_map(fn ($r) => (array) $r, \Illuminate\Support\Facades\DB::select($query)) as $line){
 	$device_id=$line['device_id'];
 	$device_group_id=$line['device_group_id'];
 	$device_group_name=$line['name'];
@@ -82,7 +84,7 @@ foreach( dbFetchRows($query) as $line){
 	$device_members_groups[$device_id][$device_group_id]=1;
 }
 
-$form_table="<form action='/plugin/p=$GLOBALS[plugin_name]' method='post'>";
+$form_table="<form action='/plugin/v1/VLANs' method='post'>";
 $form_table.='<table class="tg"><tr><th colspan=2 class="tg-9hbo">Check group to exclude its members from report <input name="exclude" value="exclude selected" type="submit"></th></tr>';
 foreach($device_groups as $gid => $gname){
 	#print $format;
@@ -91,7 +93,7 @@ foreach($device_groups as $gid => $gname){
 	if (array_key_exists ($gid, $group_ids_to_exclude)){
 		$checked=" checked ";
 	}
-	$form_table.="<tr><td class=\"$format\"><input type=\"checkbox\" name=\"group_selected[]\" value=\"$gid\" $checked><td class=\"$format\">$gname</tr>\n";
+	$form_table.="<tr><td class=\"$format\"><input type=\"checkbox\" name=\"group_selected[]\" value=\"$gid\" $checked><td class=\"$format\">".htmlspecialchars($gname)."</tr>\n";
 }
 $format= ( $n++ % 2 ) ? "tg-q8xn" : "tg-yw4l" ; # Set row format
 $form_table.="<tr><td colspan=2 class=\"$format\">Exclude listed vlans:<input type=\"textbox\" size=50 name=\"vlans_to_exclude\" value=\"$vlans_to_exclude\" ></tr>\n";
@@ -116,10 +118,10 @@ WHERE
 	devices.device_id = vlans.device_id
 ORDER BY vlan_vlan,vlan_name";
 
-foreach( dbFetchRows($query) as $line){
+foreach( array_map(fn ($r) => (array) $r, \Illuminate\Support\Facades\DB::select($query)) as $line){
 	$device_id=$line['device_id'];
 	$device_is_excluded=0;
-	foreach($device_members_groups[$device_id] as $gid => $foo){
+	foreach(($device_members_groups[$device_id] ?? []) as $gid => $foo){
 		if (array_key_exists($gid, $group_ids_to_exclude)){
 			$device_is_excluded=1;
 		}
@@ -131,12 +133,12 @@ foreach( dbFetchRows($query) as $line){
 		if (array_key_exists ($line['vlan_vlan'], $vlan_nr_to_exclude_from_report)){
 			#Exclude from report
 		}else{
-			$data[$line['vlan_vlan']][$line['vlan_name']][" <A HREF='/device/device=$line[device_id]'>$line[sysName]</A>"]++;
+			$data[$line['vlan_vlan']][$line['vlan_name']][" <A HREF='/device/device=$line[device_id]'>".htmlspecialchars($line['sysName'])."</A>"]=1;
 			$key="$line[sysName].$line[vlan_vlan]";
 			$vlans[$key]['name']=$line['vlan_name'];
 			$vlans[$key]['vlan']=$line['vlan_vlan'];
 			$vlans[$key]['device']=$line['sysName'];
-			$vlans[$key]['type']=$line['type'];
+			$vlans[$key]['type']=$line['vlan_type'];
 		}
 	}
 }
@@ -147,7 +149,7 @@ foreach($data as $vlan_nr => $vlan_name_array){
 	$format= ( $n++ % 2 ) ? "tg-q8xn" : "tg-yw4l" ; # Set row format
 	print "<tr><td class=\"$format\" rowspan='". count($vlan_name_array). "'>$vlan_nr</td>\n";
 	foreach($vlan_name_array as $vlan_name => $device_array){
-		print "<td class=\"$format\">$vlan_name</td><td  class=\"$format\"> ";
+		print "<td class=\"$format\">".htmlspecialchars((string)$vlan_name)."</td><td  class=\"$format\"> ";
 		$names=array();
 		foreach($device_array as $device => $tmp){
 			array_push($names, "$device");
@@ -178,7 +180,7 @@ WHERE
 	AND ports_fdb.vlan_id=vlans.vlan_id
 	AND devices.device_id=ports_fdb.device_id
 ORDER BY vlans.vlan_vlan;";
-foreach( dbFetchRows($query) as $line){
+foreach( array_map(fn ($r) => (array) $r, \Illuminate\Support\Facades\DB::select($query)) as $line){
 	$key="$line[sysName].$line[vlan_vlan]";
 	$fdb[$key]=1;
 }
